@@ -1,42 +1,47 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+# Tiny D-Cache (AHB Controller)
 
-# Tiny Tapeout Verilog Project Template
+This project implements a miniaturized Data Cache Controller based on the `dcache_ahb_ctrl` core, optimized for the Tiny Tapeout environment.
 
-- [Read the documentation for project](docs/info.md)
+## Overview
 
-## What is Tiny Tapeout?
+The Tiny D-Cache is a direct-mapped cache designed for 8-bit architectures. It provides a simple request/response interface for a CPU and uses an AHB-Lite master interface to communicate with external memory. For this tapeout, the AHB interface is mapped to the bidirectional `uio` pins to simulate external memory interaction.
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+## Technical Specifications
 
-To learn more and get started, visit https://tinytapeout.com.
+- **Word Size**: 8 bits (1 byte)
+- **Cache Size**: 8 entries
+- **Address Space**: 8 bits
+- **CPU Interface**: 4-bit nibble-based reads (multiplexed)
+- **Memory Interface**: AHB-Lite over UIO pins
 
-## Set up your Verilog project
+## Pinout Mapping
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+### CPU Side (Dedicated Inputs/Outputs)
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+| Pin | Name | Description |
+|---|---|---|
+| `ui_in[4:0]` | `addr` | Cache address bits [4:0] (padded to 8 bits internally) |
+| `ui_in[5]` | `valid` | CPU Request Valid |
+| `ui_in[6]` | `write` | CPU Request Write (1=Write, 0=Read) |
+| `ui_in[7]` | `sel` | Nibble Select (0=Lower 4 bits, 1=Upper 4 bits) |
+| `uo_out[3:0]` | `rdata` | 4-bit CPU Read Data (selected nibble) |
+| `uo_out[4]` | `ready` | Cache Ready for next request |
+| `uo_out[5]` | `vld_out`| Cache Response Valid |
+| `uo_out[6]` | `hwrite` | AHB Write status (for debug) |
+| `uo_out[7]` | `htrans` | AHB Transfer status (for debug) |
 
-## Enable GitHub actions to build the results page
+**Note**: `wdata` is currently hardwired to `0` in this implementation.
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+### Memory Side (Bidirectional IOs)
 
-## Resources
+The `uio` pins are managed by an internal FSM to simulate external memory:
+1. When an AHB request occurs, the chip drives `0x69` on `uio_out` as a handshake.
+2. It then switches to input mode and samples `uio_in` to retrieve data from the "external memory".
 
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+## How to Test
 
-## What next?
-
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+1. Apply Reset (`rst_n` low).
+2. Set an address on `ui_in[4:0]`.
+3. Assert `ui_in[5]` (Valid).
+4. Monitor `uo_out[4]` (Ready) and `uo_out[5]` (Response Valid).
+5. Use `ui_in[7]` to toggle between the upper and lower nibbles of the cached byte.
