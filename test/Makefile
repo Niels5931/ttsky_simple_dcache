@@ -6,12 +6,12 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = dcache_ahb_ctrl.sv
+PROJECT_SOURCES = project.v dcache_ahb_ctrl.sv
 
 ifneq ($(GATES),yes)
 
 # RTL simulation:
-SIM_BUILD				= _sim_build/rtl
+SIM_BUILD				= sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
