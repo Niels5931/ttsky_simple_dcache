@@ -1,0 +1,6 @@
+[submodule "test/uvm/uvc/pyuvm_clkuvc"]
+	path = test/uvm/uvc/pyuvm_clkuvc
+	url = https://github.com/Niels5931/pyuvm_clkuvc.git
+[submodule "test/uvm/uvc/pyuvm_rstuvc"]
+	path = test/uvm/uvc/pyuvm_rstuvc
+	url = https://github.com/Niels5931/pyuvm_rstuvc.git
