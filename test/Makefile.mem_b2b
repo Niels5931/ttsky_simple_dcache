@@ -1,0 +1,13 @@
+SIM ?= verilator
+FST ?= -fst
+TOPLEVEL_LANG ?= verilog
+
+TEST ?= uvm.tb.b2b.mem.tests.cl_mem_b2b_simple_test
+
+TOPLEVEL = mem_b2b_tb
+SIM_BUILD = sim_build/mem_b2b
+VERILOG_SOURCES += $(PWD)/mem_b2b_tb.sv
+
+MODULE = $(TEST)
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
