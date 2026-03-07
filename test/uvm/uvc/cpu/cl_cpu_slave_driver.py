@@ -15,26 +15,21 @@ class cl_cpu_slave_driver(cl_cpu_base_driver):
 
     def drive_reset(self):
         self.cfg.vif.uo_out.value = 0
-        self.logger.debug("drive_reset: uo_out=0")
+        self.logger.info("drive_reset: uo_out=0")
 
     async def drive_item(self, req: cl_cpu_seq_item, rsp: cl_cpu_seq_item) -> None:
-        self.logger.debug("drive_item: Starting, driving req_ready=1")
+        self.logger.info("drive_item: Starting, driving req_ready=1")
 
         uo_val = 1 << 4
         self.cfg.vif.uo_out.value = uo_val
-        self.logger.debug("drive_item: Asserted req_ready=1, waiting for req_valid")
+        self.logger.info("drive_item: Asserted req_ready=1, waiting for req_valid")
 
         while True:
             await RisingEdge(self.cfg.vif.clk)
             ui_val = int(self.cfg.vif.ui_in.value)
             if (ui_val >> 5) & 1:
-                self.logger.debug("drive_item: Saw req_valid=1")
+                self.logger.info("drive_item: Saw req_valid=1")
                 break
-
-        rsp.addr = ui_val & 0x1F
-        rsp.op = CpuOp.WRITE if (ui_val >> 6) & 1 else CpuOp.READ
-        rsp.data = 0
-        self.logger.debug(f"drive_item: Sampled request addr=0x{rsp.addr:02x} op={rsp.op.name}")
 
         await RisingEdge(self.cfg.vif.clk)
         
@@ -45,7 +40,7 @@ class cl_cpu_slave_driver(cl_cpu_base_driver):
         uo_val |= 1 << 5
         uo_val |= req.data & 0xF
         self.cfg.vif.uo_out.value = uo_val
-        self.logger.debug(f"drive_item: Driving response resp_valid=1 resp_rdata=0x{req.data:02x}")
+        self.logger.info(f"drive_item: Driving response resp_valid=1 resp_rdata=0x{req.data:02x}")
 
         await RisingEdge(self.cfg.vif.clk)
         # No longer valid response
@@ -54,13 +49,13 @@ class cl_cpu_slave_driver(cl_cpu_base_driver):
         uo_val &= ~(1 << 4)
         
         self.cfg.vif.uo_out.value = uo_val
-        self.logger.debug("drive_item: Response complete")
+        self.logger.info("drive_item: Response complete")
 
     async def driver_loop(self) -> None:
         while self.cfg.vif.rst_n.value == 0:
             await RisingEdge(self.cfg.vif.clk)
         self.reset_event.clear()
-        self.logger.debug("driver_loop: Reset deasserted, ready for items")
+        self.logger.info("driver_loop: Reset deasserted, ready for items")
 
         while True:
             seq_item: cl_cpu_seq_item = await self.seq_item_port.get_next_item()

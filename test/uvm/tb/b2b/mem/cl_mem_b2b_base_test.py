@@ -3,8 +3,8 @@ from cocotb.triggers import Timer
 
 from pyuvm import uvm_test, uvm_component, uvm_fatal, ConfigDB
 
-from ....uvc.pyuvm_clkuvc import cl_clk_base_seq, cl_clk_config
 from ....uvc.pyuvm_rstuvc import cl_rst_apply_seq, cl_rst_release_seq, cl_rst_polarity
+from ....uvc.pyuvm_clkuvc import cl_clk_base_seq, cl_clk_config
 from ....uvc.mem import cl_mem_if
 from .cl_mem_b2b_base_seq import cl_mem_b2b_base_vseq
 from .cl_mem_b2b_env import cl_mem_b2b_env

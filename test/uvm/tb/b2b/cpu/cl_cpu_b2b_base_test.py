@@ -46,10 +46,6 @@ class cl_cpu_b2b_base_test(uvm_test):
     async def run_phase(self):
         self.raise_objection()
 
-        cocotb.top.ena.value = 1
-        cocotb.top.ui_in.value = 0
-        cocotb.top.uio_in.value = 0
-
         clk_seq = cl_clk_base_seq("clk_seq")
         await clk_seq.start(self.env.clk_agent.sequencer)
 

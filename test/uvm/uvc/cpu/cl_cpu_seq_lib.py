@@ -14,7 +14,7 @@ class cl_cpu_base_seq(uvm_sequence):
         await super().body()
         if self.seq_item is None:
             self.seq_item = cl_cpu_seq_item("seq_item")
-        self.seq_item.randomize()
+            self.seq_item.randomize()
         await self.start_item(self.seq_item)
         await self.finish_item(self.seq_item)
 

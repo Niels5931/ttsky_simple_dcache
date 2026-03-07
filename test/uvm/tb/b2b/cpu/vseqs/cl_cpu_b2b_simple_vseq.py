@@ -27,10 +27,10 @@ class cl_cpu_b2b_simple_vseq(cl_cpu_b2b_base_vseq):
         seq_item.randomize()
 
         master_seq = cl_cpu_base_seq("master_seq")
-        master_seq.seq_item = seq_item.copy()
+        #master_seq.seq_item = seq_item.copy()
 
         slave_seq = cl_cpu_base_seq("slave_seq")
-        slave_seq.seq_item = seq_item.copy()
+        #slave_seq.seq_item = seq_item.copy()
 
         master_task = cocotb.start_soon(master_seq.start(vseqr.m_vseqr))
         slave_task = cocotb.start_soon(slave_seq.start(vseqr.s_vseqr))
