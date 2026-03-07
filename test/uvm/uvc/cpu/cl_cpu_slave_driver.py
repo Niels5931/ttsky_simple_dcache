@@ -37,21 +37,24 @@ class cl_cpu_slave_driver(cl_cpu_base_driver):
         self.logger.debug(f"drive_item: Sampled request addr=0x{rsp.addr:02x} op={rsp.op.name}")
 
         await RisingEdge(self.cfg.vif.clk)
-        await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
+        
+        # No longer ready
         uo_val &= ~(1 << 4)
-        self.cfg.vif.uo_out.value = uo_val
-        self.logger.debug("drive_item: Deasserted req_ready=0")
-
+        
+        # Response valid
         uo_val |= 1 << 5
         uo_val |= req.data & 0xF
         self.cfg.vif.uo_out.value = uo_val
         self.logger.debug(f"drive_item: Driving response resp_valid=1 resp_rdata=0x{req.data:02x}")
 
         await RisingEdge(self.cfg.vif.clk)
-        await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
+        # No longer valid response
         uo_val &= ~(1 << 5)
+        # No longer ready
+        uo_val &= ~(1 << 4)
+        
         self.cfg.vif.uo_out.value = uo_val
-        self.logger.debug("drive_item: Response complete, resp_valid=0")
+        self.logger.debug("drive_item: Response complete")
 
     async def driver_loop(self) -> None:
         while self.cfg.vif.rst_n.value == 0:

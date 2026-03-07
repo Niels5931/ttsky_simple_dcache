@@ -40,7 +40,6 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
                 if (uo_val >> 5) & 1:
                     break
             rsp.data = uo_val & 0xF
-            rsp.resp_valid = 1
             self.logger.debug(f"drive_item: Sampled resp_rdata=0x{rsp.data:01x}")
 
         await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
