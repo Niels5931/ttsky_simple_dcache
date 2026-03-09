@@ -34,6 +34,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Verilator
+        uses: veryl-lang/setup-verilator@v1
+        with:
+          version: 5.036
+
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttsky26a
 
