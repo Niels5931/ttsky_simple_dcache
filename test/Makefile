@@ -5,6 +5,8 @@
 SIM ?= verilator
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
+TRACE_FST ?= 1
+TRACE_DEPTH ?= 99
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = project.v dcache_ahb_ctrl.sv
 
@@ -38,8 +40,11 @@ COMPILE_ARGS 		+= -I$(SRC_DIR)
 VERILOG_SOURCES += $(PWD)/tb.sv
 TOPLEVEL = tt_um_simple_dcache_tb
 
+# Tracing options
+EXTRA_ARGS += --trace --trace-structs --trace-depth 99
+
 # List test modules to run, separated by commas and without the .py suffix:
-COCOTB_TEST_MODULES = uvm.tb.hello_world
+COCOTB_TEST_MODULES = uvm.tb.tt_um_dcache.tests.cl_tt_um_dcache_simple_test
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
