@@ -35,9 +35,6 @@ class cl_mem_slave_driver(cl_mem_base_driver):
             req: Request sequence item with data to respond with
             rsp: Response sequence item to populate with transaction info
         """
-        # Wait for uio_oe = 0xFF and uio_out = 0x69 (handshake from MEM_DRIVE state)
-        timeout_cycles = self.cfg.params.response_timeout_cycles
-        cycle_count = 0
 
         while True:
             await RisingEdge(self.cfg.vif.clk)
@@ -46,32 +43,13 @@ class cl_mem_slave_driver(cl_mem_base_driver):
             self.logger.debug(f"Polling handshake: uio_oe=0x{uio_oe_val:02x} uio_out=0x{uio_out_val:02x}")
 
             if uio_oe_val == 0xFF and uio_out_val == self.HANDSHAKE_PATTERN:
-                self.logger.info(f"Handshake detected after {cycle_count} cycles")
                 break
 
-            cycle_count += 1
-            if cycle_count >= timeout_cycles:
-                self.logger.warning(f"Timeout waiting for handshake after {timeout_cycles} cycles")
-                return
+        self.cfg.vif.uio_in.value = req.data
+        self.logger.info(f"Driving response: uio_in=0x{req.data:02x}")
+        await RisingEdge(self.cfg.vif.clk)
 
-        # Wait for bus release (uio_oe = 0x00 means MEM_SAMPLE state)
-        cycle_count = 0
-        while True:
-            await RisingEdge(self.cfg.vif.clk)
-            uio_oe_val = self.cfg.vif.uio_oe.value.to_unsigned()
-            self.logger.debug(f"Waiting for bus release: uio_oe=0x{uio_oe_val:02x} cycle={cycle_count}")
-            if uio_oe_val == 0x00:
-                self.cfg.vif.uio_in.value = req.data
-                self.logger.info(f"Bus released, driving response: uio_in=0x{req.data:02x}")
-                break
-
-            cycle_count += 1
-            if cycle_count >= timeout_cycles:
-                self.logger.warning(f"Timeout waiting for bus release after {timeout_cycles} cycles")
-                return
-
-        rsp.data = req.data
-        rsp.resp_valid = 1
+        self.cfg.vif.uio_in.value = 0
 
     async def driver_loop(self) -> None:
         """Main driver loop - wait for sequence items and respond to handshakes."""
