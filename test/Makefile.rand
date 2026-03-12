@@ -1,0 +1,4 @@
+# Random test makefile
+include Makefile
+
+COCOTB_TEST_MODULES = uvm.tb.tt_um_dcache.tests.cl_tt_um_dcache_random_test
