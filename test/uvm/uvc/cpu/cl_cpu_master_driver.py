@@ -19,10 +19,11 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
     async def drive_item(self, req: cl_cpu_seq_item, rsp: cl_cpu_seq_item) -> None:
         self.logger.info(f"drive_item: Starting {req}")
 
-        # Drive ui_in once with request: [addr[4:0], write, valid]
-        ui_val = (req.addr & 0x1F) | ((1 if req.op == CpuOp.WRITE else 0) << 6) | (1 << 5)
+        # Drive ui_in once with request: [nibble_sel, addr[4:0], write, valid]
+        nibble_sel = getattr(req, 'nibble_sel', 0) & 1
+        ui_val = (req.addr & 0x1F) | ((1 if req.op == CpuOp.WRITE else 0) << 6) | (1 << 5) | (nibble_sel << 7)
         self.cfg.vif.ui_in.value = ui_val
-        self.logger.info(f"drive_item: Drove request addr=0x{req.addr:02x} op={req.op.name}")
+        self.logger.info(f"drive_item: Drove request addr=0x{req.addr:02x} op={req.op.name} nibble_sel={nibble_sel}")
 
         # Wait for req_ready handshake
         while True:

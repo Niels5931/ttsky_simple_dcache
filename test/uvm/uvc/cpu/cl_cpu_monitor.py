@@ -61,6 +61,7 @@ class cl_cpu_monitor(uvm_monitor):
 
         item = cl_cpu_seq_item("mon_item")
         item.addr = ui_val & 0x1F
+        item.nibble_sel = (ui_val >> 7) & 1
         item.op = CpuOp.WRITE if (ui_val >> 6) & 1 else CpuOp.READ
 
         while True:

@@ -9,6 +9,7 @@ class cl_cpu_seq_item(uvm_sequence_item):
     def __init__(self, name: str = "cl_cpu_seq_item"):
         super().__init__(name)
         self.addr = vsc.rand_bit_t(5)
+        self.nibble_sel = 0
         self.op = vsc.rand_enum_t(CpuOp)
         self.data = vsc.rand_bit_t(8)
         self.resp_valid = 0
@@ -27,6 +28,7 @@ class cl_cpu_seq_item(uvm_sequence_item):
         """Create a copy of this sequence item."""
         item = cl_cpu_seq_item(self.get_name())
         item.addr = self.addr
+        item.nibble_sel = self.nibble_sel
         item.op = self.op
         item.data = self.data
         item.resp_valid = self.resp_valid
@@ -34,4 +36,4 @@ class cl_cpu_seq_item(uvm_sequence_item):
 
     def __str__(self) -> str:
         op_str = "READ" if self.op == CpuOp.READ else "WRITE"
-        return f"cl_cpu_seq_item({op_str}, addr=0x{self.addr:02x}, data=0x{self.data:02x}, resp_valid={self.resp_valid})"
+        return f"cl_cpu_seq_item({op_str}, addr=0x{self.addr:02x}, nibble_sel={self.nibble_sel}, data=0x{self.data:02x}, resp_valid={self.resp_valid})"
