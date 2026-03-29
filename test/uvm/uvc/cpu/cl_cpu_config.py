@@ -10,6 +10,7 @@ class cl_cpu_config(uvm_object):
         self.agent_mode: CpuAgentMode | None = None
         self.params: CPU_IF_PARAMS = CPU_IF_PARAMS()
         self.vif: cl_cpu_if | None = None
+        self.coverage_enabled: bool = True
 
     def set_params(self, params: CPU_IF_PARAMS) -> None:
         """Set interface parameters."""

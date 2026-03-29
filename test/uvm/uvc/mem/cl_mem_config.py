@@ -10,6 +10,7 @@ class cl_mem_config(uvm_object):
         self.agent_mode: MemAgentMode | None = None
         self.params: MEM_IF_PARAMS = MEM_IF_PARAMS()
         self.vif: cl_mem_if | None = None
+        self.coverage_enabled: bool = True
 
     def set_params(self, params: MEM_IF_PARAMS) -> None:
         """Set interface parameters."""

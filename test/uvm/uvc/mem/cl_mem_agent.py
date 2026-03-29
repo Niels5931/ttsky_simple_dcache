@@ -38,8 +38,9 @@ class cl_mem_agent(uvm_agent):
         self.monitor = cl_mem_monitor.create("monitor", self)
         self.ap = uvm_analysis_port("ap", self)
 
-        # Coverage subscriber (enabled by default, can be disabled via config)
-        self.coverage = cl_mem_coverage.create("coverage", self)
+        # Coverage subscriber (conditionally enabled)
+        if self.cfg.coverage_enabled:
+            self.coverage = cl_mem_coverage.create("coverage", self)
 
         # Driver and sequencer only in active mode
         if self.cfg.is_active == uvm_active_passive_enum.UVM_ACTIVE:
