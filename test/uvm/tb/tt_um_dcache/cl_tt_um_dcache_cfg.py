@@ -20,3 +20,4 @@ class cl_tt_um_dcache_cfg(uvm_object):
         self.cpu_master_cfg.agent_mode = CpuAgentMode.MASTER
         self.mem_slave_cfg: cl_mem_config = cl_mem_config("mem_slave_cfg")
         self.mem_slave_cfg.agent_mode = MemAgentMode.SLAVE
+        self.scoreboard_enabled: bool = True

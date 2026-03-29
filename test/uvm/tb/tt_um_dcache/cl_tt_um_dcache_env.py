@@ -46,11 +46,13 @@ class cl_tt_um_dcache_env(uvm_env):
 
         self.vseqr = cl_tt_um_dcache_vseqr.create("vseqr", self)
 
-        self.sb = cl_tt_um_dcache_sb.create("sb", self)
+        if self.tb_cfg.scoreboard_enabled:
+            self.sb = cl_tt_um_dcache_sb.create("sb", self)
 
     def connect_phase(self):
         super().connect_phase()
         self.vseqr.cpu_vseqr = self.cpu_agent.sequencer
         self.vseqr.mem_vseqr = self.mem_agent.sequencer
-        self.cpu_agent.monitor.ap.connect(self.sb.cpu_fifo.analysis_export)
-        self.mem_agent.monitor.ap.connect(self.sb.mem_fifo.analysis_export)
+        if self.tb_cfg.scoreboard_enabled:
+            self.cpu_agent.monitor.ap.connect(self.sb.cpu_fifo.analysis_export)
+            self.mem_agent.monitor.ap.connect(self.sb.mem_fifo.analysis_export)
