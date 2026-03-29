@@ -6,12 +6,13 @@ from ...uvc.cpu import cl_cpu_agent
 from ...uvc.mem import cl_mem_agent
 from .cl_tt_um_dcache_cfg import cl_tt_um_dcache_cfg
 from .cl_tt_um_dcache_vseqr import cl_tt_um_dcache_vseqr
+from .cl_tt_um_dcache_sb import cl_tt_um_dcache_sb
 
 
 class cl_tt_um_dcache_env(uvm_env):
     """Environment for tt_um_dcache testbench.
 
-    Integrates clock, reset, CPU master, and memory slave agents.
+    Integrates clock, reset, CPU master, memory slave agents, and scoreboard.
     """
 
     def __init__(self, name: str = "cl_tt_um_dcache_env", parent: uvm_component | None = None):
@@ -21,6 +22,7 @@ class cl_tt_um_dcache_env(uvm_env):
         self.vseqr: cl_tt_um_dcache_vseqr | None = None
         self.cpu_agent: cl_cpu_agent | None = None
         self.mem_agent: cl_mem_agent | None = None
+        self.sb: cl_tt_um_dcache_sb | None = None
         self.tb_cfg: cl_tt_um_dcache_cfg | None = None
 
     def build_phase(self):
@@ -44,7 +46,11 @@ class cl_tt_um_dcache_env(uvm_env):
 
         self.vseqr = cl_tt_um_dcache_vseqr.create("vseqr", self)
 
+        self.sb = cl_tt_um_dcache_sb.create("sb", self)
+
     def connect_phase(self):
         super().connect_phase()
         self.vseqr.cpu_vseqr = self.cpu_agent.sequencer
         self.vseqr.mem_vseqr = self.mem_agent.sequencer
+        self.cpu_agent.monitor.ap.connect(self.sb.cpu_fifo.analysis_export)
+        self.mem_agent.monitor.ap.connect(self.sb.mem_fifo.analysis_export)

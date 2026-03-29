@@ -6,6 +6,7 @@ from .cl_cpu_master_driver import cl_cpu_master_driver
 from .cl_cpu_slave_driver import cl_cpu_slave_driver
 from .cl_cpu_monitor import cl_cpu_monitor
 from .cl_cpu_agent import cl_cpu_agent
+from .cl_cpu_coverage import cl_cpu_coverage
 from .cl_cpu_seq_lib import (
     cl_cpu_base_seq,
     cl_cpu_single_read_seq,

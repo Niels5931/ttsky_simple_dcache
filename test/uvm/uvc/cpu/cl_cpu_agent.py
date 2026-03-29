@@ -13,6 +13,7 @@ from .cl_cpu_slave_driver import cl_cpu_slave_driver
 from .cl_cpu_monitor import cl_cpu_monitor
 from .cl_cpu_config import cl_cpu_config
 from .cl_cpu_types import CpuAgentMode
+from .cl_cpu_coverage import cl_cpu_coverage
 
 
 class cl_cpu_agent(uvm_agent):
@@ -24,6 +25,7 @@ class cl_cpu_agent(uvm_agent):
         self.monitor: cl_cpu_monitor | None = None
         self.cfg: cl_cpu_config | None = None
         self.ap: uvm_analysis_port | None = None
+        self.coverage: cl_cpu_coverage | None = None
 
     def build_phase(self):
         super().build_phase()
@@ -35,6 +37,9 @@ class cl_cpu_agent(uvm_agent):
         ConfigDB().set(self, "monitor", "cfg", self.cfg)
         self.monitor = cl_cpu_monitor.create("monitor", self)
         self.ap = uvm_analysis_port("ap", self)
+
+        # Coverage subscriber (enabled by default, can be disabled via config)
+        self.coverage = cl_cpu_coverage.create("coverage", self)
 
         # Driver and sequencer only in active mode
         if self.cfg.is_active == uvm_active_passive_enum.UVM_ACTIVE:
@@ -51,6 +56,10 @@ class cl_cpu_agent(uvm_agent):
         super().connect_phase()
         # Connect monitor analysis port to agent analysis port
         self.monitor.ap.connect(self.ap)
+
+        # Connect monitor to coverage subscriber (internal to UVC)
+        if self.coverage is not None:
+            self.monitor.ap.connect(self.coverage.analysis_export)
 
         # Connect driver to sequencer in active mode
         if self.cfg.is_active == uvm_active_passive_enum.UVM_ACTIVE:

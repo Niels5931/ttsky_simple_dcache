@@ -4,3 +4,6 @@
 [submodule "test/uvm/uvc/pyuvm_rstuvc"]
 	path = test/uvm/uvc/pyuvm_rstuvc
 	url = https://github.com/Niels5931/pyuvm_rstuvc.git
+[submodule "external/dcache"]
+	path = external/dcache
+	url = https://github.com/Niels5931/dcache.git

@@ -13,6 +13,7 @@ from .cl_mem_master_driver import cl_mem_master_driver
 from .cl_mem_monitor import cl_mem_monitor
 from .cl_mem_config import cl_mem_config
 from .cl_mem_types import MemAgentMode
+from .cl_mem_coverage import cl_mem_coverage
 
 
 class cl_mem_agent(uvm_agent):
@@ -24,6 +25,7 @@ class cl_mem_agent(uvm_agent):
         self.monitor: cl_mem_monitor | None = None
         self.cfg: cl_mem_config | None = None
         self.ap: uvm_analysis_port | None = None
+        self.coverage: cl_mem_coverage | None = None
 
     def build_phase(self):
         super().build_phase()
@@ -35,6 +37,9 @@ class cl_mem_agent(uvm_agent):
         ConfigDB().set(self, "monitor", "cfg", self.cfg)
         self.monitor = cl_mem_monitor.create("monitor", self)
         self.ap = uvm_analysis_port("ap", self)
+
+        # Coverage subscriber (enabled by default, can be disabled via config)
+        self.coverage = cl_mem_coverage.create("coverage", self)
 
         # Driver and sequencer only in active mode
         if self.cfg.is_active == uvm_active_passive_enum.UVM_ACTIVE:
@@ -52,6 +57,12 @@ class cl_mem_agent(uvm_agent):
         # Connect monitor analysis port to agent analysis port
         self.monitor.ap.connect(self.ap)
 
+        # Connect monitor to coverage subscriber (internal to UVC)
+        if self.coverage is not None:
+            self.monitor.ap.connect(self.coverage.analysis_export)
+
         # Connect driver to sequencer in active mode
         if self.cfg.is_active == uvm_active_passive_enum.UVM_ACTIVE:
             self.driver.seq_item_port.connect(self.sequencer.seq_item_export)
+
+        self.logger.info("Connect phase complete")
