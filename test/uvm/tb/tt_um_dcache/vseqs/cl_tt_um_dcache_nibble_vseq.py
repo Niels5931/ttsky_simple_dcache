@@ -1,4 +1,5 @@
 import cocotb
+from cocotb.triggers import Timer
 
 from ....uvc.cpu import cl_cpu_seq_item, cl_cpu_base_seq, CpuOp
 from ....uvc.mem import cl_mem_seq_item, cl_mem_base_seq, MemOp
@@ -64,3 +65,6 @@ class cl_tt_um_dcache_nibble_vseq(cl_tt_um_dcache_base_vseq):
 
         cpu_task_high = cocotb.start_soon(cpu_seq_high.start(vseqr.cpu_vseqr))
         await cpu_task_high
+
+        # Allow scoreboard to process the transaction before test ends
+        await Timer(50, units='ns')

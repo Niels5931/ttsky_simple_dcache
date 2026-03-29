@@ -33,6 +33,7 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
                 self.logger.info("drive_item: Saw req_ready=1, handshake complete")
                 break
 
+        self.cfg.vif.ui_in.value = 0
         # For READ: sample 4-bit response after handshake
         if req.op == CpuOp.READ:
             while True:
@@ -43,8 +44,8 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
             rsp.data = uo_val & 0xF
             self.logger.info(f"drive_item: Sampled resp_rdata=0x{rsp.data:01x}")
 
-        await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
         self.drive_reset()
+        await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
         self.logger.info(f"drive_item: Complete, rsp={rsp}")
 
     async def driver_loop(self) -> None:

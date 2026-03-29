@@ -128,10 +128,16 @@ class cl_tt_um_dcache_sb(uvm_scoreboard):
         while not self.stop_event:
             try:
                 item = await self.cpu_fifo.get()
+                self.raise_objection()
                 self.handle_cpu_transaction(item)
+                self.drop_objection()
             except Exception as e:
                 if not self.stop_event:
                     self.logger.error(f"CPU monitor error: {e}")
+                try:
+                    self.drop_objection()
+                except:
+                    pass
         self.logger.info("CPU monitor loop stopped")
 
     async def mem_monitor_loop(self) -> None:
@@ -140,7 +146,9 @@ class cl_tt_um_dcache_sb(uvm_scoreboard):
         while not self.stop_event:
             try:
                 item = await self.mem_fifo.get()
+                self.raise_objection()
                 self.handle_mem_transaction(item)
+                self.drop_objection()
             except Exception as e:
                 if not self.stop_event:
                     self.logger.error(f"MEM monitor error: {e}")
@@ -151,7 +159,6 @@ class cl_tt_um_dcache_sb(uvm_scoreboard):
         self.logger.info("Scoreboard run_phase started")
         self.cpu_task = cocotb.start_soon(self.cpu_monitor_loop())
         self.mem_task = cocotb.start_soon(self.mem_monitor_loop())
-        self.logger.info(f"Scoreboard complete: {self.errors} errors, {self.matches} matches")
 
     def report_phase(self) -> None:
         """Called at end of test to report results."""
