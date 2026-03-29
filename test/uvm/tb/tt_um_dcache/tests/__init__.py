@@ -1,1 +1,12 @@
-# Empty init file for tests package
+# Test package for tt_um_dcache testbench
+
+from .cl_tt_um_dcache_simple_test import cl_tt_um_dcache_simple_test
+from .cl_tt_um_dcache_read_miss_test import cl_tt_um_dcache_read_miss_test
+from .cl_tt_um_dcache_write_miss_test import cl_tt_um_dcache_write_miss_test
+from .cl_tt_um_dcache_random_test import cl_tt_um_dcache_random_test
+from .cl_tt_um_dcache_raw_test import cl_tt_um_dcache_raw_test
+from .cl_tt_um_dcache_nibble_test import cl_tt_um_dcache_nibble_test
+from .cl_tt_um_dcache_eviction_test import cl_tt_um_dcache_eviction_test
+from .cl_tt_um_dcache_write_verify_test import cl_tt_um_dcache_write_verify_test
+from .cl_tt_um_dcache_back2back_test import cl_tt_um_dcache_back2back_test
+from .cl_tt_um_dcache_mixed_rw_test import cl_tt_um_dcache_mixed_rw_test
