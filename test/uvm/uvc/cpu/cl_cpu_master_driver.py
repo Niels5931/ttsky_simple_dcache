@@ -19,13 +19,11 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
     async def drive_item(self, req: cl_cpu_seq_item, rsp: cl_cpu_seq_item) -> None:
         self.logger.info(f"drive_item: Starting {req}")
 
-        # Drive ui_in once with request: [nibble_sel, addr[4:0], write, valid]
         nibble_sel = getattr(req, 'nibble_sel', 0) & 1
         ui_val = (req.addr & 0x1F) | ((1 if req.op == CpuOp.WRITE else 0) << 6) | (1 << 5) | (nibble_sel << 7)
         self.cfg.vif.ui_in.value = ui_val
         self.logger.info(f"drive_item: Drove request addr=0x{req.addr:02x} op={req.op.name} nibble_sel={nibble_sel}")
 
-        # Wait for req_ready handshake
         while True:
             await RisingEdge(self.cfg.vif.clk)
             uo_val = int(self.cfg.vif.uo_out.value)
@@ -33,8 +31,10 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
                 self.logger.info("drive_item: Saw req_ready=1, handshake complete")
                 break
 
-        self.cfg.vif.ui_in.value = 0
-        # For READ: sample 4-bit response after handshake
+        ui_val_no_valid = (req.addr & 0x1F) | ((1 if req.op == CpuOp.WRITE else 0) << 6) | (nibble_sel << 7)
+        self.cfg.vif.ui_in.value = ui_val_no_valid
+        self.logger.info(f"drive_item: Cleared req_valid, keeping nibble_sel={nibble_sel} stable")
+
         if req.op == CpuOp.READ:
             while True:
                 await RisingEdge(self.cfg.vif.clk)
@@ -45,7 +45,7 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
             self.logger.info(f"drive_item: Sampled resp_rdata=0x{rsp.data:01x}")
 
         self.drive_reset()
-        await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
+        await RisingEdge(self.cfg.vif.clk)
         self.logger.info(f"drive_item: Complete, rsp={rsp}")
 
     async def driver_loop(self) -> None:

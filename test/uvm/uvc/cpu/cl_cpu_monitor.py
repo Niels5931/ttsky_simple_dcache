@@ -65,33 +65,18 @@ class cl_cpu_monitor(uvm_monitor):
         item.op = CpuOp.WRITE if (ui_val >> 6) & 1 else CpuOp.READ
         self.logger.info(f"Monitor: Found item {item}")
 
-        self.logger.info("Monitor: Waiting for vld_out (uo_out bit 4)")
-        vld_out_count = 0
         while True:
             await RisingEdge(self.cfg.vif.clk)
             uo_val = int(self.cfg.vif.uo_out.value)
-            vld_out_count += 1
-            if vld_out_count <= 5:
-                self.logger.info(f"Monitor: Waiting vld_out, cycle {vld_out_count}, uo_out=0x{uo_val:02x}")
             if (uo_val >> 4) & 1:
-                self.logger.info(f"Monitor: Saw vld_out=1, uo_out=0x{uo_val:02x}")
                 break
 
-        # Check if ready is already asserted on the same cycle
-        if (uo_val >> 5) & 1:
-            self.logger.info(f"Monitor: ready already asserted, uo_out=0x{uo_val:02x}")
-        else:
-            self.logger.info("Monitor: Waiting for ready (uo_out bit 5)")
-            ready_count = 0
-            while True:
-                await RisingEdge(self.cfg.vif.clk)
-                uo_val = int(self.cfg.vif.uo_out.value)
-                ready_count += 1
-                if ready_count <= 5:
-                    self.logger.info(f"Monitor: Waiting ready, cycle {ready_count}, uo_out=0x{uo_val:02x}")
-                if (uo_val >> 5) & 1:
-                    self.logger.info(f"Monitor: Saw ready=1, uo_out=0x{uo_val:02x}")
-                    break
+        self.logger.info("Monitor: Waiting for ready (uo_out bit 5)")
+        while True:
+            uo_val = int(self.cfg.vif.uo_out.value)
+            if (uo_val >> 5) & 1:
+                break
+            await RisingEdge(self.cfg.vif.clk)
 
         item.resp_valid = True
         if item.op == CpuOp.READ:
