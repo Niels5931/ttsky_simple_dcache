@@ -14,7 +14,7 @@ class cl_tt_um_dcache_random_vseq(cl_tt_um_dcache_base_vseq):
 
     def __init__(self, name: str = "cl_tt_um_dcache_random_vseq"):
         super().__init__(name)
-        self.num_iterations = 4
+        self.num_iterations = 500
 
     async def body(self):
         await super().body()

@@ -65,13 +65,14 @@ class cl_cpu_monitor(uvm_monitor):
         item.op = CpuOp.WRITE if (ui_val >> 6) & 1 else CpuOp.READ
         self.logger.info(f"Monitor: Found item {item}")
 
+        self.logger.info("Monitor: Waiting for ready (uo_out bit 5)")
         while True:
-            await RisingEdge(self.cfg.vif.clk)
             uo_val = int(self.cfg.vif.uo_out.value)
             if (uo_val >> 4) & 1:
                 break
+            await RisingEdge(self.cfg.vif.clk)
 
-        self.logger.info("Monitor: Waiting for ready (uo_out bit 5)")
+        self.logger.info("Monitor: Waiting for resp_valid (uo_out bit 5)")
         while True:
             uo_val = int(self.cfg.vif.uo_out.value)
             if (uo_val >> 5) & 1:

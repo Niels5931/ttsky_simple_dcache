@@ -8,12 +8,17 @@ TOPLEVEL_LANG ?= verilog
 TRACE_FST ?= 1
 TRACE_DEPTH ?= 99
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v dcache_ahb_ctrl.sv
+DCACHE_ROOT = $(PWD)/../external/dcache
+
+# dcache core sources from submodule
+DCACHE_SOURCES = pkg_dcache/hdl/pkg_dcache.sv dcache_ahb_ctrl/hdl/dcache_ahb_ctrl.sv
+PROJECT_SOURCES = project.v
 
 ifneq ($(GATES),yes)
 
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl
+VERILOG_SOURCES += $(addprefix $(DCACHE_ROOT)/cores/,$(DCACHE_SOURCES))
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else

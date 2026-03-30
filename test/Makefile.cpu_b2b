@@ -3,12 +3,17 @@ FST ?= -fst
 TOPLEVEL_LANG ?= verilog
 
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = dcache_ahb_ctrl.sv project.v
+DCACHE_ROOT = $(PWD)/../external/dcache
+
+# dcache core sources from submodule
+DCACHE_SOURCES = pkg_dcache/hdl/pkg_dcache.sv dcache_ahb_ctrl/hdl/dcache_ahb_ctrl.sv
+PROJECT_SOURCES = project.v
 
 TEST ?= uvm.tb.b2b.cpu.tests.cl_cpu_b2b_simple_test
 
 TOPLEVEL = cpu_b2b_tb
 SIM_BUILD = sim_build/cpu_b2b
+VERILOG_SOURCES += $(addprefix $(DCACHE_ROOT)/cores/,$(DCACHE_SOURCES))
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 VERILOG_SOURCES += $(PWD)/cpu_b2b_tb.sv
 
