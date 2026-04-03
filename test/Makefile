@@ -2,7 +2,7 @@
 # See https://docs.cocotb.org/en/stable/quickstart.html for more info
 
 # defaults
-SIM ?= verilator
+SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 TRACE_FST ?= 1
@@ -11,7 +11,7 @@ SRC_DIR = $(PWD)/../src
 DCACHE_ROOT = $(PWD)/../external/dcache
 
 # dcache core sources from submodule
-DCACHE_SOURCES = pkg_dcache/hdl/pkg_dcache.sv dcache_ahb_ctrl/hdl/dcache_ahb_ctrl.sv
+DCACHE_SOURCES = dcache_ahb_ctrl/hdl/dcache_ahb_ctrl.v
 PROJECT_SOURCES = project.v
 
 ifneq ($(GATES),yes)
@@ -42,11 +42,11 @@ endif
 COMPILE_ARGS 		+= -I$(SRC_DIR)
 
 # Include the testbench sources:
-VERILOG_SOURCES += $(PWD)/tb.sv
+VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tt_um_simple_dcache_tb
 
 # Tracing options
-EXTRA_ARGS += --trace --trace-structs --trace-depth 99
+#EXTRA_ARGS += --trace --trace-structs --trace-depth 99
 
 # List test modules to run, separated by commas and without the .py suffix:
 COCOTB_TEST_MODULES = uvm.tb.tt_um_dcache.tests.cl_tt_um_dcache_simple_test

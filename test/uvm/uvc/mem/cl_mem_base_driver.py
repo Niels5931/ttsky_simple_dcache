@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Event, First
+from cocotb.triggers import RisingEdge, Event, First, ReadOnly
 
 from pyuvm import ConfigDB, uvm_component, uvm_driver, uvm_fatal
 from .cl_mem_config import cl_mem_config
@@ -25,6 +25,15 @@ class cl_mem_base_driver(uvm_driver):
         await self.main_loop()
 
     async def main_loop(self):
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) == 1:
+                    break
+            except ValueError:
+                pass  # Skip cycles with X/Z values
+            await RisingEdge(self.cfg.vif.clk)
+            #await ReadOnly()
+        self.logger.info("Starting MEM driver processes")
         main_proc = cocotb.start_soon(self.driver_loop())
         rst_proc = cocotb.start_soon(self.handle_reset())
         

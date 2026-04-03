@@ -38,12 +38,15 @@ class cl_mem_slave_driver(cl_mem_base_driver):
 
         while True:
             await RisingEdge(self.cfg.vif.clk)
-            uio_oe_val = self.cfg.vif.uio_oe.value.to_unsigned()
-            uio_out_val = self.cfg.vif.uio_out.value.to_unsigned()
-            self.logger.debug(f"Polling handshake: uio_oe=0x{uio_oe_val:02x} uio_out=0x{uio_out_val:02x}")
+            try:
+                uio_oe_val = self.cfg.vif.uio_oe.value.to_unsigned()
+                uio_out_val = self.cfg.vif.uio_out.value.to_unsigned()
+                self.logger.debug(f"Polling handshake: uio_oe=0x{uio_oe_val:02x} uio_out=0x{uio_out_val:02x}")
 
-            if uio_oe_val == 0xFF and uio_out_val == self.HANDSHAKE_PATTERN:
-                break
+                if uio_oe_val == 0xFF and uio_out_val == self.HANDSHAKE_PATTERN:
+                    break
+            except ValueError:
+                pass
 
         self.cfg.vif.uio_in.value = req.data
         self.logger.info(f"Driving response: uio_in=0x{req.data:02x}")
@@ -53,7 +56,12 @@ class cl_mem_slave_driver(cl_mem_base_driver):
 
     async def driver_loop(self) -> None:
         """Main driver loop - wait for sequence items and respond to handshakes."""
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
         self.reset_event.clear()
         self.logger.debug("driver_loop: Reset deasserted, ready for items")
@@ -78,12 +86,22 @@ class cl_mem_slave_driver(cl_mem_base_driver):
 
     async def handle_reset(self) -> None:
         """Handle reset - monitor for reset assertion and reset bus."""
-        while self.cfg.vif.rst_n.value == 1:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) == 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
 
         self.logger.info("Resetting slave bus")
         self.reset_event.set()
         self.drive_reset()
 
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)

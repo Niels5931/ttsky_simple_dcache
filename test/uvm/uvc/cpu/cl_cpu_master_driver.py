@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, First
+from cocotb.triggers import RisingEdge, First, ReadOnly
 
 from pyuvm import uvm_component
 from .cl_cpu_base_driver import cl_cpu_base_driver
@@ -26,10 +26,13 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
 
         while True:
             await RisingEdge(self.cfg.vif.clk)
-            uo_val = int(self.cfg.vif.uo_out.value)
-            if (uo_val >> 4) & 1:
-                self.logger.info("drive_item: Saw req_ready=1, handshake complete")
-                break
+            try:
+                uo_val = int(self.cfg.vif.uo_out.value)
+                if (uo_val >> 4) & 1:
+                    self.logger.info("drive_item: Saw req_ready=1, handshake complete")
+                    break
+            except ValueError:
+                pass
 
         ui_val_no_valid = (req.addr & 0x1F) | ((1 if req.op == CpuOp.WRITE else 0) << 6) | (nibble_sel << 7)
         self.cfg.vif.ui_in.value = ui_val_no_valid
@@ -38,9 +41,12 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
         if req.op == CpuOp.READ:
             while True:
                 await RisingEdge(self.cfg.vif.clk)
-                uo_val = int(self.cfg.vif.uo_out.value)
-                if (uo_val >> 5) & 1:
-                    break
+                try:
+                    uo_val = int(self.cfg.vif.uo_out.value)
+                    if (uo_val >> 5) & 1:
+                        break
+                except ValueError:
+                    pass
             rsp.data = uo_val & 0xF
             self.logger.info(f"drive_item: Sampled resp_rdata=0x{rsp.data:01x}")
 
@@ -49,10 +55,14 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
         self.logger.info(f"drive_item: Complete, rsp={rsp}")
 
     async def driver_loop(self) -> None:
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
         self.reset_event.clear()
-        self.logger.info("driver_loop: Reset deasserted, ready for items")
 
         while True:
             seq_item: cl_cpu_seq_item = await self.seq_item_port.get_next_item()
@@ -73,7 +83,12 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
             self.seq_item_port.put_response(rsp_item)
 
     async def handle_reset(self) -> None:
-        while self.cfg.vif.rst_n.value == 1:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) == 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
 
         self.logger.info("Resetting master bus")
@@ -81,5 +96,10 @@ class cl_cpu_master_driver(cl_cpu_base_driver):
         await RisingEdge(self.cfg.vif.clk)  # Wait for next cycle's drive phase
         self.drive_reset()
 
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)

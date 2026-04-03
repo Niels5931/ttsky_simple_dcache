@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import RisingEdge, Timer
 
 from pyuvm import uvm_test, uvm_component, uvm_fatal, ConfigDB
 
@@ -64,6 +64,10 @@ class cl_tt_um_dcache_base_test(uvm_test):
 
         release_rst_seq = cl_rst_release_seq("release_rst_seq")
         await release_rst_seq.start(self.env.rst_agent.sequencer)
+
+        await RisingEdge(cocotb.top.clk)
+
+        self.logger.info("Released reset")
 
         await self.test_body()
 

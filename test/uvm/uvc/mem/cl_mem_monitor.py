@@ -39,7 +39,12 @@ class cl_mem_monitor(uvm_monitor):
     async def monitor_loop(self) -> None:
         """Main monitor loop - collect transactions."""
         # Wait until reset is deasserted (rst_n goes high)
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
         self.reset_event.clear()
 
@@ -52,15 +57,23 @@ class cl_mem_monitor(uvm_monitor):
         """Handle reset - restart monitor loop after reset."""
         while True:
             await RisingEdge(self.cfg.vif.clk)
-            if self.cfg.vif.rst_n.value == 0:
-                self.logger.info("Reset detected in monitor")
-                self.reset_event.set()
-                if self.main_proc:
-                    self.main_proc.cancel()
-                while self.cfg.vif.rst_n.value == 0:
-                    await RisingEdge(self.cfg.vif.clk)
-                # Restart monitor loop after reset
-                self.main_proc = cocotb.start_soon(self.monitor_loop())
+            try:
+                if int(self.cfg.vif.rst_n.value) == 0:
+                    self.logger.info("Reset detected in monitor")
+                    self.reset_event.set()
+                    if self.main_proc:
+                        self.main_proc.cancel()
+                    while True:
+                        try:
+                            if int(self.cfg.vif.rst_n.value) != 0:
+                                break
+                        except ValueError:
+                            pass
+                        await RisingEdge(self.cfg.vif.clk)
+                    # Restart monitor loop after reset
+                    self.main_proc = cocotb.start_soon(self.monitor_loop())
+            except ValueError:
+                pass
 
     async def _do_collect(self) -> cl_mem_seq_item:
         """Perform the actual transaction collection."""
@@ -71,13 +84,15 @@ class cl_mem_monitor(uvm_monitor):
         while True:
             await RisingEdge(self.cfg.vif.clk)
 
+            try:
+                uio_oe_val = int(self.cfg.vif.uio_oe.value)
+                uio_out_val = int(self.cfg.vif.uio_out.value)
 
-            uio_oe_val = int(self.cfg.vif.uio_oe.value)
-            uio_out_val = int(self.cfg.vif.uio_out.value)
-
-            if uio_oe_val == 0xFF and uio_out_val == self.HANDSHAKE_PATTERN:
-                self.logger.debug(f"Monitor detected handshake: uio_out=0x{uio_out_val:02x}")
-                break
+                if uio_oe_val == 0xFF and uio_out_val == self.HANDSHAKE_PATTERN:
+                    self.logger.debug(f"Monitor detected handshake: uio_out=0x{uio_out_val:02x}")
+                    break
+            except ValueError:
+                pass
 
             cycle_count += 1
             if cycle_count >= timeout_cycles:
@@ -89,10 +104,12 @@ class cl_mem_monitor(uvm_monitor):
         while True:
             await RisingEdge(self.cfg.vif.clk)
 
-
-            uio_oe_val = int(self.cfg.vif.uio_oe.value)
-            if uio_oe_val == 0x00:
-                break
+            try:
+                uio_oe_val = int(self.cfg.vif.uio_oe.value)
+                if uio_oe_val == 0x00:
+                    break
+            except ValueError:
+                pass
 
             cycle_count += 1
             if cycle_count >= timeout_cycles:
@@ -100,7 +117,10 @@ class cl_mem_monitor(uvm_monitor):
 
         # Sample uio_in (response data being driven by external agent)
         item = cl_mem_seq_item("mon_item")
-        item.data = int(self.cfg.vif.uio_in.value)
+        try:
+            item.data = int(self.cfg.vif.uio_in.value)
+        except ValueError:
+            item.data = 0
         item.op = MemOp.READ  # Memory transactions are reads from cache perspective
         item.resp_valid = True
 

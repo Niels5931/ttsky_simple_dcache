@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, ReadOnly, First, Event
+from cocotb.triggers import RisingEdge, ReadOnly, First, Event, ReadOnly
 
 from pyuvm import ConfigDB, uvm_component, uvm_monitor, uvm_fatal, uvm_analysis_port
 from .cl_cpu_config import cl_cpu_config
@@ -32,7 +32,13 @@ class cl_cpu_monitor(uvm_monitor):
         await self.main_proc
 
     async def monitor_loop(self) -> None:
-        while self.cfg.vif.rst_n.value == 0:
+        while True:
+            await ReadOnly()
+            try:
+                if int(self.cfg.vif.rst_n.value) != 0:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
         self.reset_event.clear()
         while True:
@@ -43,21 +49,33 @@ class cl_cpu_monitor(uvm_monitor):
     async def handle_reset(self) -> None:
         while True:
             await RisingEdge(self.cfg.vif.clk)
-            if self.cfg.vif.rst_n.value == 0:
-                self.logger.info("Reset detected in monitor")
-                self.reset_event.set()
-                if self.main_proc:
-                    self.main_proc.cancel()
-                while self.cfg.vif.rst_n.value == 0:
-                    await RisingEdge(self.cfg.vif.clk)
-                self.main_proc = cocotb.start_soon(self.monitor_loop())
+            try:
+                if int(self.cfg.vif.rst_n.value) == 0:
+                    self.logger.info("Reset detected in monitor")
+                    self.reset_event.set()
+                    if self.main_proc:
+                        self.main_proc.cancel()
+                    while True:
+                        try:
+                            if int(self.cfg.vif.rst_n.value) != 0:
+                                break
+                        except ValueError:
+                            pass
+                        await RisingEdge(self.cfg.vif.clk)
+                    self.main_proc = cocotb.start_soon(self.monitor_loop())
+            except ValueError:
+                pass
 
     async def _do_collect(self) -> cl_cpu_seq_item:
         while True:
             await RisingEdge(self.cfg.vif.clk)
-            ui_val = int(self.cfg.vif.ui_in.value)
-            if (ui_val >> 5) & 1:
-                break
+            try:
+                ui_val = int(self.cfg.vif.ui_in.value)
+                if (ui_val >> 5) & 1:
+                    break
+            except ValueError:
+                # Skip cycles with X/Z values
+                continue
 
         item = cl_cpu_seq_item("mon_item")
         item.addr = ui_val & 0x1F
@@ -67,16 +85,22 @@ class cl_cpu_monitor(uvm_monitor):
 
         self.logger.info("Monitor: Waiting for ready (uo_out bit 5)")
         while True:
-            uo_val = int(self.cfg.vif.uo_out.value)
-            if (uo_val >> 4) & 1:
-                break
+            try:
+                uo_val = int(self.cfg.vif.uo_out.value)
+                if (uo_val >> 4) & 1:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
 
         self.logger.info("Monitor: Waiting for resp_valid (uo_out bit 5)")
         while True:
-            uo_val = int(self.cfg.vif.uo_out.value)
-            if (uo_val >> 5) & 1:
-                break
+            try:
+                uo_val = int(self.cfg.vif.uo_out.value)
+                if (uo_val >> 5) & 1:
+                    break
+            except ValueError:
+                pass
             await RisingEdge(self.cfg.vif.clk)
 
         item.resp_valid = True

@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge, Event, First
+from cocotb.triggers import RisingEdge, Event, First, ReadOnly
 
 from pyuvm import ConfigDB, uvm_component, uvm_driver, uvm_fatal
 from .cl_cpu_config import cl_cpu_config
@@ -27,6 +27,15 @@ class cl_cpu_base_driver(uvm_driver):
     async def main_loop(self):
         # Start both coroutines - driver_loop handles reset internally via nested loops
         # handle_reset just monitors for reset and sets the event
+        while True:
+            try:
+                #await ReadOnly()
+                if int(self.cfg.vif.rst_n.value) == 1:
+                    break
+            except ValueError:
+                pass  # Skip cycles with X/Z values
+            await RisingEdge(self.cfg.vif.clk)
+        self.logger.info("Starting CPU driver processes")
         main_proc = cocotb.start_soon(self.driver_loop())
         rst_proc = cocotb.start_soon(self.handle_reset())
         
