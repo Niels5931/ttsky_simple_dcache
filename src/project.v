@@ -16,27 +16,32 @@ module tt_um_simple_dcache (
     input  wire       rst_n     // reset_n - low to reset
 );
 
+  // State machine definitions
+  localparam [1:0] MEM_IDLE   = 2'b00;
+  localparam [1:0] MEM_DRIVE  = 2'b01;
+  localparam [1:0] MEM_SAMPLE = 2'b10;
+
   // dcache_ahb_ctrl instantiation signals
-  logic                   req_valid;
-  logic [7:0]             req_addr;
-  logic [7:0]             req_wdata;
-  logic                   req_write;
-  logic [2:0]             req_size;
-  logic                   req_ready;
-  logic                   resp_valid;
-  logic [7:0]             resp_rdata;
+  wire                  req_valid;
+  wire [7:0]            req_addr;
+  wire [7:0]            req_wdata;
+  wire                  req_write;
+  wire [2:0]            req_size;
+  wire                  req_ready;
+  wire                  resp_valid;
+  wire [7:0]            resp_rdata;
 
   // AHB Master Interface
-  logic [7:0]             haddr;
-  logic [7:0]             hwdata;
-  logic [1:0]             htrans;
-  logic                   hwrite;
-  logic [2:0]             hsize;
-  logic [2:0]             hburst;
-  logic [3:0]             hprot;
-  logic [7:0]             hrdata;
-  logic                   hready;
-  logic                   hresp;
+  wire [7:0]            haddr;
+  wire [7:0]            hwdata;
+  wire [1:0]            htrans;
+  wire                  hwrite;
+  wire [2:0]            hsize;
+  wire [2:0]            hburst;
+  wire [3:0]            hprot;
+  wire [7:0]            hrdata;
+  wire                  hready;
+  wire                  hresp;
 
   // Tiny Design Mapping
   assign req_valid = ui_in[5];
@@ -52,19 +57,13 @@ module tt_um_simple_dcache (
   // -------------------------------------------------------------------------
   // External Memory Simulation (AHB -> UIO)
   // -------------------------------------------------------------------------
-  typedef enum logic [1:0] {
-    MEM_IDLE,
-    MEM_DRIVE,
-    MEM_SAMPLE
-  } mem_state_t;
+  reg [1:0] mem_state, mem_next;
+  reg [7:0] uio_out_reg;
+  reg [7:0] uio_oe_reg;
+  reg [7:0] hrdata_reg;
+  reg       hready_reg;
 
-  mem_state_t mem_state, mem_next;
-  logic [7:0] uio_out_reg;
-  logic [7:0] uio_oe_reg;
-  logic [7:0] hrdata_reg;
-  logic       hready_reg;
-
-  always_ff @(posedge clk or negedge rst_n) begin
+  always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       mem_state <= MEM_IDLE;
     end else begin
@@ -72,7 +71,7 @@ module tt_um_simple_dcache (
     end
   end
 
-  always_comb begin
+  always @(*) begin
     mem_next    = mem_state;
     hready_reg  = 1'b1;
     uio_oe_reg  = 8'h00;
@@ -149,6 +148,6 @@ module tt_um_simple_dcache (
   assign uo_out[7]   = htrans[1];
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0, haddr, hwdata, htrans[0], hsize, hburst, hprot};
+  wire _unused = &{ena};
 
 endmodule
